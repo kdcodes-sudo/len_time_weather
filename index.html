@@ -20,6 +20,8 @@
     --overcast-a:#4a5560; --overcast-b:#7c8892;
     --rain-a:#33404a; --rain-b:#5c6b73;
     --storm-a:#12151f; --storm-b:#333d52;
+    --sky-opacity:1;
+    --skyline-opacity:0.35;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;background:#000;overflow:hidden;
@@ -44,10 +46,31 @@
     justify-content:space-between;padding:0 4.5vw;overflow:hidden;
     border-bottom:1px solid var(--hairline);transition:background 3s ease;}
   .band:last-child{border-bottom:none;}
-  .sky{position:absolute;inset:0;transition:background 3s ease;z-index:0;}
-  .stars{position:absolute;inset:0;z-index:0;opacity:0;transition:opacity 3s ease;}
-  .stars span{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;}
-  .content{position:relative;z-index:2;display:flex;align-items:center;
+  .skyline{position:absolute;inset:0;z-index:0;background-repeat:no-repeat;
+    background-position:bottom center;background-size:cover;
+    opacity:var(--skyline-opacity);transition:opacity 1.2s ease;}
+  .sky{position:absolute;inset:0;transition:background 3s ease,opacity 1.2s ease;
+    z-index:1;opacity:var(--sky-opacity);}
+  .sky::after{content:"";position:absolute;inset:-20%;pointer-events:none;
+    background:radial-gradient(circle at 30% 20%, rgba(255,255,255,0.16), rgba(255,255,255,0) 45%);
+    animation:glideGlow 70s ease-in-out infinite alternate;will-change:transform;}
+  .band.is-night .sky::after{opacity:0.35;}
+  @keyframes glideGlow{from{transform:translate(-4%,-4%);}to{transform:translate(4%,4%);}}
+  .clouds{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none;
+    opacity:0;transition:opacity 2.5s ease;}
+  .clouds.show{opacity:0.55;}
+  .clouds span{position:absolute;width:22vw;min-width:180px;height:9vh;min-height:50px;
+    background:radial-gradient(ellipse at center, rgba(255,255,255,0.5), rgba(255,255,255,0) 70%);
+    filter:blur(2px);will-change:transform;animation:driftCloud 100s linear infinite;}
+  .clouds span:nth-child(1){top:12%;animation-duration:95s;}
+  .clouds span:nth-child(2){top:38%;animation-duration:130s;animation-delay:-45s;opacity:0.75;}
+  .clouds span:nth-child(3){top:62%;animation-duration:150s;animation-delay:-90s;opacity:0.5;}
+  @keyframes driftCloud{from{transform:translateX(-35%);}to{transform:translateX(135%);}}
+  .stars{position:absolute;inset:0;z-index:3;opacity:0;transition:opacity 3s ease;}
+  .stars span{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;
+    animation:twinkle 4s ease-in-out infinite;will-change:opacity;}
+  @keyframes twinkle{0%,100%{opacity:1;}50%{opacity:0.2;}}
+  .content{position:relative;z-index:4;display:flex;align-items:center;
     justify-content:space-between;width:100%;}
   .city-block{display:flex;flex-direction:column;gap:0.4vh;}
   .eyebrow{font-size:0.85vw;letter-spacing:0.18em;text-transform:uppercase;
@@ -68,9 +91,24 @@
   .arc-wrap svg{width:100%;height:auto;display:block;}
   .arc-track{fill:none;stroke:var(--hairline);stroke-width:2;}
   .arc-fill{fill:none;stroke:rgba(244,241,234,0.55);stroke-width:2;}
-  .sun-dot{fill:#ffe1a8;filter:drop-shadow(0 0 6px rgba(255,225,168,0.85));}
-  .moon-dot{fill:#dbe3f4;filter:drop-shadow(0 0 5px rgba(219,227,244,0.7));}
+  .sun-dot{fill:#ffe1a8;filter:drop-shadow(0 0 6px rgba(255,225,168,0.85));
+    animation:dotPulse 3.2s ease-in-out infinite;transform-origin:center;transform-box:fill-box;}
+  .moon-dot{fill:#dbe3f4;filter:drop-shadow(0 0 5px rgba(219,227,244,0.7));
+    animation:dotPulse 4s ease-in-out infinite;transform-origin:center;transform-box:fill-box;}
+  @keyframes dotPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.25);}}
+  .clock .ampm{font-size:0.32em;vertical-align:middle;margin-left:0.2em;
+    color:var(--ink-dim);font-weight:500;letter-spacing:0.04em;}
   .arc-label{font-size:0.72vw;fill:var(--ink-dim);font-family:'Inter',sans-serif;}
+  .hourly{display:none;gap:0.9vw;margin-top:0.5vh;width:100%;overflow-x:auto;
+    padding-bottom:2px;}
+  #stage.vertical .hourly{display:flex;}
+  .hourly::-webkit-scrollbar{height:4px;}
+  .hourly::-webkit-scrollbar-thumb{background:var(--hairline);border-radius:4px;}
+  .hour-block{display:flex;flex-direction:column;align-items:center;gap:2px;
+    min-width:3.4vw;flex-shrink:0;}
+  .hour-block .h-time{font-size:0.62vw;color:var(--ink-dim);}
+  .hour-block .h-icon{font-size:1.3vw;}
+  .hour-block .h-temp{font-size:0.68vw;font-family:'Space Grotesk',sans-serif;}
   #settingsToggle{position:fixed;bottom:16px;right:16px;z-index:20;
     width:38px;height:38px;border-radius:50%;border:1px solid var(--hairline);
     background:rgba(0,0,0,0.4);backdrop-filter:blur(6px);color:var(--ink);
@@ -92,6 +130,15 @@
     border-radius:999px;padding:5px 12px;color:var(--ink);font-size:11.5px;
     font-family:'Inter',sans-serif;min-width:0;}
   #ytUrl::placeholder{color:rgba(244,241,234,0.4);}
+  .order-list{display:flex;flex-direction:column;gap:4px;}
+  .order-item{display:flex;justify-content:space-between;align-items:center;
+    background:rgba(255,255,255,0.05);border-radius:8px;padding:5px 9px;font-size:12px;}
+  .order-item .order-btns{display:flex;gap:4px;}
+  .order-item button{background:transparent;border:1px solid var(--hairline);
+    color:var(--ink);border-radius:6px;padding:1px 7px;cursor:pointer;font-size:11px;
+    line-height:1.5;}
+  .order-item button:disabled{opacity:0.25;cursor:default;}
+  .panel-row input[type="range"]{width:100%;accent-color:var(--ink);height:16px;}
   #ytPlayerBox{position:fixed;bottom:16px;left:16px;z-index:20;width:200px;
     border-radius:10px;overflow:hidden;border:1px solid var(--hairline);
     box-shadow:0 8px 30px rgba(0,0,0,0.5);transition:width .25s,height .25s,opacity .25s;}
@@ -108,6 +155,9 @@
     #stage.vertical .weather .icon{font-size:4.4vw;} #stage.vertical .weather .cond{font-size:2vw;}
     #stage.vertical .arc-wrap{width:26vw;} #stage.vertical .eyebrow{font-size:2vw;}
     #ytPlayerBox{width:130px;}
+    .hour-block{min-width:11vw;}
+    .hour-block .h-time{font-size:2vw;} .hour-block .h-icon{font-size:4vw;}
+    .hour-block .h-temp{font-size:2.2vw;}
     .band{padding:0 5vw;}
     .city-name{font-size:4.4vw;} .clock{font-size:11vw;} .date{font-size:2.6vw;}
     .weather{font-size:3.4vw;} .weather .icon{font-size:4.4vw;}
@@ -120,7 +170,10 @@
 
 <div id="stage">
   <div class="band" id="band-0">
-    <div class="sky"></div><div class="stars"></div>
+    <div class="skyline" id="skyline-0"></div>
+    <div class="sky"></div>
+    <div class="clouds" id="clouds-0"><span></span><span></span><span></span></div>
+    <div class="stars"></div>
     <div class="content">
       <div class="city-block">
         <div class="eyebrow">United Kingdom</div>
@@ -133,12 +186,16 @@
           <div><span class="temp" id="temp-0">--°</span><div class="cond" id="cond-0">Loading sky…</div></div>
         </div>
         <div class="arc-wrap" id="arc-0"></div>
+        <div class="hourly" id="hourly-0"></div>
       </div>
     </div>
   </div>
 
   <div class="band" id="band-1">
-    <div class="sky"></div><div class="stars"></div>
+    <div class="skyline" id="skyline-1"></div>
+    <div class="sky"></div>
+    <div class="clouds" id="clouds-1"><span></span><span></span><span></span></div>
+    <div class="stars"></div>
     <div class="content">
       <div class="city-block">
         <div class="eyebrow">India</div>
@@ -151,12 +208,16 @@
           <div><span class="temp" id="temp-1">--°</span><div class="cond" id="cond-1">Loading sky…</div></div>
         </div>
         <div class="arc-wrap" id="arc-1"></div>
+        <div class="hourly" id="hourly-1"></div>
       </div>
     </div>
   </div>
 
   <div class="band" id="band-2">
-    <div class="sky"></div><div class="stars"></div>
+    <div class="skyline" id="skyline-2"></div>
+    <div class="sky"></div>
+    <div class="clouds" id="clouds-2"><span></span><span></span><span></span></div>
+    <div class="stars"></div>
     <div class="content">
       <div class="city-block">
         <div class="eyebrow">United States</div>
@@ -169,6 +230,7 @@
           <div><span class="temp" id="temp-2">--°</span><div class="cond" id="cond-2">Loading sky…</div></div>
         </div>
         <div class="arc-wrap" id="arc-2"></div>
+        <div class="hourly" id="hourly-2"></div>
       </div>
     </div>
   </div>
@@ -208,10 +270,25 @@
   </div>
 
   <div class="panel-row">
+    <span class="panel-label">City order</span>
+    <div id="orderList" class="order-list"></div>
+  </div>
+
+  <div class="panel-row">
     <span class="panel-label">Layout</span>
     <div class="panel-controls">
       <button id="layoutBtn" class="layoutToggle on">Horizontal</button>
     </div>
+  </div>
+
+  <div class="panel-row">
+    <span class="panel-label">Sky opacity</span>
+    <input type="range" id="skyOpacity" min="0" max="1" step="0.05" value="1">
+  </div>
+
+  <div class="panel-row">
+    <span class="panel-label">Aerial view opacity</span>
+    <input type="range" id="skylineOpacity" min="0" max="1" step="0.05" value="0.35">
   </div>
 
   <div class="panel-row">
@@ -241,17 +318,50 @@ const CITIES = [
   { name:"New York",   tz:"America/New_York",lat:40.7128, lon:-74.0060, country:"United States" },
 ];
 
+/* ---------- City reorder (visual position only, data stays bound to each city's own elements) ---------- */
+let bandOrder = [0,1,2]; // city indices in current top-to-bottom / left-to-right order
+
+function applyOrder(){
+  bandOrder.forEach((cityIdx,pos)=>{
+    document.getElementById(`band-${cityIdx}`).style.order = pos;
+  });
+  renderOrderList();
+}
+function renderOrderList(){
+  const container = document.getElementById("orderList");
+  container.innerHTML = "";
+  bandOrder.forEach((cityIdx,pos)=>{
+    const row = document.createElement("div");
+    row.className = "order-item";
+    row.innerHTML = `<span>${CITIES[cityIdx].name}</span>
+      <span class="order-btns">
+        <button data-dir="up" data-pos="${pos}" ${pos===0?"disabled":""}>▲</button>
+        <button data-dir="down" data-pos="${pos}" ${pos===bandOrder.length-1?"disabled":""}>▼</button>
+      </span>`;
+    container.appendChild(row);
+  });
+  container.querySelectorAll("button").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const pos = parseInt(btn.dataset.pos,10);
+      const swapWith = btn.dataset.dir==="up" ? pos-1 : pos+1;
+      [bandOrder[pos], bandOrder[swapWith]] = [bandOrder[swapWith], bandOrder[pos]];
+      applyOrder();
+    });
+  });
+}
+applyOrder();
+
 /* ---------- Clock ---------- */
 function pad(n){ return n.toString().padStart(2,"0"); }
 
 function updateClocks(){
   const now = new Date();
   CITIES.forEach((c,i)=>{
-    const parts = new Intl.DateTimeFormat("en-GB",{
-      timeZone:c.tz, hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false
-    }).formatToParts(now).reduce((a,p)=>(a[p.type]=p.value,a),{});
-    document.getElementById(`clock-${i}`).textContent =
-      `${parts.hour}:${parts.minute}:${parts.second}`;
+    const parts = new Intl.DateTimeFormat("en-US",{
+      timeZone:c.tz, hour:"numeric", minute:"2-digit", second:"2-digit", hour12:true
+    }).formatToParts(now).reduce((a,p)=>(a[p.type]=(a[p.type]||"")+p.value,a),{});
+    document.getElementById(`clock-${i}`).innerHTML =
+      `${parts.hour}:${parts.minute}:${parts.second}<span class="ampm">${parts.dayPeriod}</span>`;
     const dateStr = new Intl.DateTimeFormat("en-GB",{
       timeZone:c.tz, weekday:"long", day:"numeric", month:"long"
     }).format(now);
@@ -313,6 +423,7 @@ function applyBaseSky(idx, sunrise, sunset, now){
   const code = forceCond !== null ? forceCond : 0; // 0 = assume clear until live weather loads
   band.style.background = skyGradient(code, isDay, forceCond !== null ? false : twilight);
   document.querySelector(`#band-${idx} .stars`).style.opacity = isDay ? 0 : 0.5;
+  setBandMood(idx, code, isDay);
   renderArc(`arc-${idx}`, sunrise.getTime(), sunset.getTime(), now, isDay);
   return isDay;
 }
@@ -397,10 +508,43 @@ function renderArc(id, sunriseMs, sunsetMs, nowMs, isDay){
     </svg>`;
 }
 
+function currentHourISO(tz){
+  const parts = new Intl.DateTimeFormat("en-GB",{
+    timeZone:tz, year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", hour12:false
+  }).formatToParts(new Date()).reduce((a,p)=>(a[p.type]=p.value,a),{});
+  const hour = parts.hour === "24" ? "00" : parts.hour;
+  return `${parts.year}-${parts.month}-${parts.day}T${hour}:00`;
+}
+
+function renderHourly(idx, hourly, tz){
+  if (!hourly || !hourly.time) return;
+  const nowKey = currentHourISO(tz);
+  let start = hourly.time.findIndex(t => t >= nowKey);
+  if (start === -1) start = 0;
+  const slice = hourly.time.slice(start, start+6);
+  const html = slice.map((t,j)=>{
+    const i = start+j;
+    const code = forceCond !== null ? forceCond : hourly.weathercode[i];
+    const [,icon] = WMO[code] || ["Clear","☀️"];
+    const hourNum = parseInt(t.slice(11,13),10);
+    const ampm = hourNum >= 12 ? "PM" : "AM";
+    const h12 = ((hourNum % 12) || 12);
+    const label = j===0 ? "Now" : `${h12}${ampm}`;
+    const temp = Math.round(hourly.temperature_2m[i]);
+    return `<div class="hour-block">
+      <div class="h-time">${label}</div>
+      <div class="h-icon">${icon}</div>
+      <div class="h-temp">${temp}°</div>
+    </div>`;
+  }).join("");
+  document.getElementById(`hourly-${idx}`).innerHTML = html;
+}
+
 async function fetchWeather(city, idx){
   try{
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}`
-      + `&current_weather=true&daily=sunrise,sunset&timezone=${encodeURIComponent(city.tz)}`;
+      + `&current_weather=true&daily=sunrise,sunset&hourly=temperature_2m,weathercode`
+      + `&timezone=${encodeURIComponent(city.tz)}`;
     const res = await fetch(url);
     const data = await res.json();
     const cw = data.current_weather;
@@ -422,13 +566,78 @@ async function fetchWeather(city, idx){
     const band = document.querySelector(`#band-${idx} .sky`);
     band.style.background = skyGradient(effectiveCode, isDay, twilight);
     document.querySelector(`#band-${idx} .stars`).style.opacity = isDay ? 0 : 0.5;
+    setBandMood(idx, effectiveCode, isDay);
 
     renderArc(`arc-${idx}`, sunrise, sunset, now, isDay);
+    renderHourly(idx, data.hourly, city.tz);
   }catch(err){
     // Network blocked or unreachable — keep the offline sun-based sky already applied.
     document.getElementById(`wicon-${idx}`).textContent = "🌍";
     document.getElementById(`cond-${idx}`).textContent = "Sky by sun position (live weather offline)";
   }
+}
+
+/* ---------- Aerial skyline silhouettes (generic vector art, one per city) ---------- */
+const SKYLINES = {
+  0: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 160'>
+    <rect x='0' y='120' width='40' height='40' fill='#060912'/>
+    <rect x='45' y='100' width='30' height='60' fill='#060912'/>
+    <rect x='80' y='110' width='25' height='50' fill='#060912'/>
+    <rect x='150' y='60' width='14' height='100' fill='#060912'/>
+    <polygon points='150,60 157,38 164,60' fill='#060912'/>
+    <circle cx='260' cy='92' r='44' fill='none' stroke='#060912' stroke-width='6'/>
+    <line x1='260' y1='48' x2='260' y2='136' stroke='#060912' stroke-width='3'/>
+    <line x1='216' y1='92' x2='304' y2='92' stroke='#060912' stroke-width='3'/>
+    <line x1='229' y1='60' x2='291' y2='124' stroke='#060912' stroke-width='3'/>
+    <line x1='229' y1='124' x2='291' y2='60' stroke='#060912' stroke-width='3'/>
+    <rect x='330' y='95' width='28' height='65' fill='#060912'/>
+    <rect x='362' y='115' width='22' height='45' fill='#060912'/>
+  </svg>`,
+  1: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 160'>
+    <line x1='30' y1='42' x2='30' y2='118' stroke='#060912' stroke-width='4'/>
+    <path d='M30,45 Q10,35 5,50 Q20,50 30,55Z' fill='#060912'/>
+    <path d='M30,45 Q50,30 55,48 Q38,48 30,55Z' fill='#060912'/>
+    <path d='M30,44 Q30,18 46,14 Q35,34 30,54Z' fill='#060912'/>
+    <path d='M45,150 Q60,120 130,150 Q105,157 75,157 Q55,157 45,150Z' fill='#060912'/>
+    <path d='M58,150 L58,112 Q92,100 118,122 L118,150Z' fill='#060912'/>
+    <line x1='345' y1='62' x2='345' y2='138' stroke='#060912' stroke-width='4'/>
+    <path d='M345,65 Q325,55 320,70 Q334,70 345,75Z' fill='#060912'/>
+    <path d='M345,65 Q365,50 370,68 Q353,68 345,75Z' fill='#060912'/>
+    <rect x='0' y='150' width='400' height='10' fill='#060912' opacity='0.4'/>
+  </svg>`,
+  2: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 160'>
+    <rect x='10' y='100' width='24' height='60' fill='#060912'/>
+    <rect x='38' y='80' width='20' height='80' fill='#060912'/>
+    <rect x='62' y='115' width='18' height='45' fill='#060912'/>
+    <rect x='95' y='50' width='26' height='110' fill='#060912'/>
+    <rect x='101' y='35' width='14' height='20' fill='#060912'/>
+    <line x1='108' y1='35' x2='108' y2='15' stroke='#060912' stroke-width='2'/>
+    <rect x='130' y='90' width='16' height='70' fill='#060912'/>
+    <rect x='150' y='70' width='22' height='90' fill='#060912'/>
+    <rect x='178' y='95' width='18' height='65' fill='#060912'/>
+    <rect x='205' y='30' width='30' height='130' fill='#060912'/>
+    <rect x='212' y='15' width='16' height='18' fill='#060912'/>
+    <rect x='218' y='0' width='4' height='18' fill='#060912'/>
+    <rect x='245' y='105' width='20' height='55' fill='#060912'/>
+    <rect x='270' y='85' width='24' height='75' fill='#060912'/>
+    <rect x='300' y='100' width='18' height='60' fill='#060912'/>
+    <rect x='324' y='65' width='26' height='95' fill='#060912'/>
+    <rect x='356' y='110' width='20' height='50' fill='#060912'/>
+  </svg>`
+};
+function applySkylines(){
+  Object.keys(SKYLINES).forEach(idx=>{
+    const uri = `url("data:image/svg+xml,${encodeURIComponent(SKYLINES[idx])}")`;
+    document.getElementById(`skyline-${idx}`).style.backgroundImage = uri;
+  });
+}
+applySkylines();
+
+function setBandMood(idx, code, isDay){
+  const band = document.getElementById(`band-${idx}`);
+  band.classList.toggle("is-day", isDay);
+  band.classList.toggle("is-night", !isDay);
+  document.getElementById(`clouds-${idx}`).classList.toggle("show", code>=2);
 }
 
 function seedStars(){
@@ -488,6 +697,13 @@ document.getElementById("musicBtn").addEventListener("click", toggleMusic);
 /* ---------- Settings panel open/close ---------- */
 document.getElementById("settingsToggle").addEventListener("click", ()=>{
   document.getElementById("settingsPanel").classList.toggle("open");
+});
+
+document.getElementById("skyOpacity").addEventListener("input", e=>{
+  document.documentElement.style.setProperty("--sky-opacity", e.target.value);
+});
+document.getElementById("skylineOpacity").addEventListener("input", e=>{
+  document.documentElement.style.setProperty("--skyline-opacity", e.target.value);
 });
 
 /* ---------- Music source switching (Ambient vs YouTube) ---------- */
